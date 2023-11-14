@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script>
+    function loadFile() {
+      let file = document.querySelector("#file").files[0]
+      let chunkSize = 1024 * 1024 * 5;
+      let total = file.size;
+      let loaded = 0;
+      //let start = 0;
+      let reader = new FileReader();
+      let chunks = Math.ceil(total / chunkSize)
+      var chunkId = 0;
+
+      //let blob = file.slice(start,chunkSize)
+      console.log('Size: ' + total)
+      console.log('Chunks: ' + chunks)
+      var chunk
+       function n (e) {
+        // let chunk = reader.result
+        loaded += chunk.length;
+
+        console.log("Loaded: ", chunk.length)
+        let len = Math.min(total - loaded, chunkSize)
+
+        
+        
+        //console.log(chunk)
+        if (loaded < total) {
+          chunkId++;
+          console.log(`START #${chunkId}:`, loaded, loaded + len)
+          chunk = file.slice(loaded, loaded + len)
+          submit(chunk,`chunk${chunkId}`)
+          
+          
+          // reader.readAsBinaryString(file.slice(loaded, loaded + len))
+
+        }
+
+
+      }
+      console.log(`START #${chunkId}:`, 0, chunkSize)
+      chunk =  file.slice(0, chunkSize)
+      submit(chunk,`chunk${chunkId}`).then = n
+      // reader.readAsBinaryString(file.slice(0, chunkSize))
+    }
+
+    async function submit(blob,name) {
+      // let blob = await new Promise(resolve => canvasElem.toBlob(resolve, 'image/png'));
+      
+      var fd = new FormData();
+                fd.append("fileToUpload", blob,name);
+                // fd.append("fileName", name);
+      let response = await fetch('/', {
+        method: 'POST',
+       
+        body:fd
+      });
+    }
+  </script>
+</head>
+
+<body>
+  <input type="file" id="file" onChange="loadFile()">
+</body>
+
+</html>
