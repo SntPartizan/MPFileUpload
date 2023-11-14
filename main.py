@@ -1,85 +1,92 @@
-# This is a sample Python script
 from bottle import route, run, template, post, request
 import os
+import hashlib
 from minio import Minio
-# from minio.error import  (ResponseError, BucketAlreadyOwnedByYou,
-#                          BucketAlreadyExists)
+from dotenv import load_dotenv
+import datetime
+from minio.commonconfig import ComposeSource
+
+load_dotenv()
+
+secret = os.getenv('SECRET_KEY')
+
+bucket_name = "chunks"
 
 # Initialize minioClient with an endpoint and access/secret keys.
 minioClient = Minio('127.0.0.1:9000',
                     access_key='6VCT5WneTj6RmVEv5z31',
-                    secret_key='7uCw295YeF3vhnMzT3qqyGtTQovBg9HcYdDFfOEe',
+                    secret_key=secret,
                     region="test",
                     secure=False)
 
-
 proj_dir = os.path.dirname(os.path.abspath(__file__))
 
-print(proj_dir)
 
-@route('/hello/<name>')
-def index(name):
-    return template('<b>Hello {{name}}</b>!', name=name)
+def computeMD5hash(to_hash_str):
+    m = hashlib.md5()
+    m.update(to_hash_str.encode("utf-8"))
+    return m.hexdigest()
+
 
 @route('/')
 def index():
-    return  template('index.html', name="name")
-    return """<form method="post" action="" enctype="multipart/form-data" >
-  <div>
-    <label for="profile_pic">Choose file to upload</label>
-    <input
-      type="file"
-      id="profile_pic"
-      name="profile_pic"
-       />
-  </div>
-  <div>
-    <button>Submit</button>
-  </div>
-</form>"""
+    ip = request.remote_addr
+    upload_id = "{}{}{}".format(datetime.datetime.now(), ip, request.headers.get('User-Agent'))
+    upload_id = computeMD5hash(upload_id)
+
+
+
+    return template('index.html', uid=upload_id)
+
 
 @post("/")
 def post():
-    # r = request
-    s = [request.files[x] for x in request.files]
-    file = s[0]
-    upl_dir = os.path.join(proj_dir , "uploads")
+    file = request.files.get("fileToUpload")
+    if file is None:
+        return "no file"
 
-    # file_name = file.name
-    path = os.path.join(upl_dir,file.filename)
+    uid = request.params.get('uid')
+    last = request.params.get('last')
+
+    upl_dir = os.path.join(proj_dir, "uploads")
+
+    path = os.path.join(upl_dir, file.filename)
     file.save(upl_dir, overwrite=True)
-    save(path, file_name=file.filename)
 
-    # print(f)
-    # print(s[0].name)
+    if last:
+        pass
 
-    return s[0].name
+    print(uid)
+    save(path, file_name=file.filename, metadata={'uid': uid})
 
-
-
-
-
-# Make a bucket with the make_bucket API call.
-try:
-       minioClient.make_bucket("maylogs", location="test")
-except Exception as err:
-    print(err)
-    pass
+    return file.filename
 
 
-
-
-def save(path,file_name="test.xml"):
-    # Put an object 'pumaserver_debug.log' with contents from 'pumaserver_debug.log'.
-
+def save(path, file_name="test", metadata=None):
     try:
-           minioClient.fput_object('maylogs', file_name, path)
+        minioClient.fput_object(bucket_name, f"{metadata['uid']}_{file_name}", path, metadata=metadata)
     except Exception as err:
-           print(err)
+        print(err)
 
 
+if __name__ == "__main__":
 
-run(host='localhost', port=8080)
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+    if not minioClient.bucket_exists(bucket_name):
+        try:
+            minioClient.make_bucket(bucket_name)
+        except Exception as err:
+            print(err)
 
+    # l=minioClient.list_objects(bucket_name,"430fff6fa",recursive=True,include_user_meta=True)
+    #
+    # sources = [
+    #     ComposeSource(bucket_name, '430fff6fabf858740b589007a6e30e07_chunk_0'),
+    #     ComposeSource(bucket_name, '430fff6fabf858740b589007a6e30e07_chunk_1'),
+    #     ComposeSource(bucket_name, '430fff6fabf858740b589007a6e30e07_chunk_2'),
+    # ]
+    #
+    # # Create my-bucket/my-object by combining source object
+    # result = minioClient.compose_object(bucket_name, "my-object", sources)
+    # print(result.object_name, result.version_id)
+
+    run(host='localhost', port=8080)

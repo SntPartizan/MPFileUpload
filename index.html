@@ -5,61 +5,35 @@
   <meta charset="UTF-8">
   <title>Title</title>
   <script>
+
     function loadFile() {
-      let file = document.querySelector("#file").files[0]
-      let chunkSize = 1024 * 1024 * 5;
-      let total = file.size;
-      let loaded = 0;
-      //let start = 0;
-      let reader = new FileReader();
-      let chunks = Math.ceil(total / chunkSize)
-      var chunkId = 0;
-
-      //let blob = file.slice(start,chunkSize)
-      console.log('Size: ' + total)
-      console.log('Chunks: ' + chunks)
-      var chunk
-       function n (e) {
-        // let chunk = reader.result
-        loaded += chunk.length;
-
-        console.log("Loaded: ", chunk.length)
-        let len = Math.min(total - loaded, chunkSize)
-
-        
-        
-        //console.log(chunk)
-        if (loaded < total) {
-          chunkId++;
-          console.log(`START #${chunkId}:`, loaded, loaded + len)
-          chunk = file.slice(loaded, loaded + len)
-          submit(chunk,`chunk${chunkId}`)
-          
-          
-          // reader.readAsBinaryString(file.slice(loaded, loaded + len))
-
-        }
-
-
-      }
-      console.log(`START #${chunkId}:`, 0, chunkSize)
-      chunk =  file.slice(0, chunkSize)
-      submit(chunk,`chunk${chunkId}`).then = n
-      // reader.readAsBinaryString(file.slice(0, chunkSize))
+      const file = document.querySelector("#file").files[0]; 
+      submit(file);
     }
 
-    async function submit(blob,name) {
-      // let blob = await new Promise(resolve => canvasElem.toBlob(resolve, 'image/png'));
-      
-      var fd = new FormData();
-                fd.append("fileToUpload", blob,name);
-                // fd.append("fileName", name);
-      let response = await fetch('/', {
+    function submit(blob, chunkId = 0) {
+
+      const chunkSize = 1024 * 1024 * 5;
+      const chunks = Math.ceil(blob.size / chunkSize)
+      const offset = chunkId * chunkSize;
+      const chunk = blob.slice(offset, offset + chunkSize)
+
+      if (chunk.size == 0) return;
+
+      const fd = new FormData();
+      fd.append("fileToUpload", chunk, 'chunk_' + chunkId);
+      fd.append("uid", "{{uid}}");
+      const last = (chunkId == chunks - 1)
+      fd.append("last", last);
+
+      fetch('/', {
         method: 'POST',
-       
-        body:fd
-      });
+        body: fd
+      }).then((resp) => {
+        submit(blob, chunkId + 1)
+      })
     }
+
   </script>
 </head>
 

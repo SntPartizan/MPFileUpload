@@ -41,7 +41,7 @@ coverage.xml
 *.pot
 # Sphinx documentation
 docs/_build/
+.env
 
-
-# project specific  bhjvhjvhj
+# project specific
 uploads/
