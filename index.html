@@ -28,7 +28,7 @@
       const last = (chunkId == chunks - 1)
       fd.append("last", last);
 
-      fetch('/', {
+      fetch('/upload', {
         method: 'POST',
         body: fd
       }).then((resp) => {

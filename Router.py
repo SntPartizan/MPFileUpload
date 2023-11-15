@@ -18,7 +18,7 @@ class Router:
         self.uploader = uploader
         self.upload_to = upload_to
         bottle.route('/', 'GET', self.index)
-        bottle.route('/', 'POST', self.upload)
+        bottle.route('/upload', 'POST', self.upload)
 
         pass
 
