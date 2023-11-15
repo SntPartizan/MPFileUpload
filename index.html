@@ -13,7 +13,7 @@
 
     function submit(file, chunkId = 0) {
 
-      const chunkSize = 1024 * 1024 * 100;
+      const chunkSize = {{ chunk_size }};
       const chunks = Math.ceil(file.size / chunkSize)
       const offset = chunkId * chunkSize;
       const chunk = file.slice(offset, offset + chunkSize)

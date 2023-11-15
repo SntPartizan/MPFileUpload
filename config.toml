@@ -5,9 +5,11 @@ s3.secure = false
 # Bucket for uploaded files
 s3.bucket = 'uploaded'
 
-host = 'localhost'
-port = 8080
-
 # Wait timeout in seconds Future list (Treads)
 wait_timeout = 180
 max_workers = 5
+
+[router]
+host = 'localhost'
+port = 8080
+chunk_size = 50
