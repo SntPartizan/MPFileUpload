@@ -11,17 +11,19 @@
       submit(file);
     }
 
-    function submit(blob, chunkId = 0) {
+    function submit(file, chunkId = 0) {
 
-      const chunkSize = 1024 * 1024 * 5;
-      const chunks = Math.ceil(blob.size / chunkSize)
+      const chunkSize = 1024 * 1024 * 100;
+      const chunks = Math.ceil(file.size / chunkSize)
       const offset = chunkId * chunkSize;
-      const chunk = blob.slice(offset, offset + chunkSize)
+      const chunk = file.slice(offset, offset + chunkSize)
 
       if (chunk.size == 0) return;
 
       const fd = new FormData();
-      fd.append("fileToUpload", chunk, 'chunk_' + chunkId);
+      const chunkName  = 10000+chunkId
+      fd.append("fileToUpload", chunk, `chunk_${chunkName}`);
+      fd.append("origin", file.name)
       fd.append("uid", "{{uid}}");
       const last = (chunkId == chunks - 1)
       fd.append("last", last);
@@ -30,7 +32,7 @@
         method: 'POST',
         body: fd
       }).then((resp) => {
-        submit(blob, chunkId + 1)
+        submit(file, chunkId + 1)
       })
     }
 
