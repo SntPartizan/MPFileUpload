@@ -1,4 +1,7 @@
 import os
+import concurrent.futures
+from concurrent.futures import wait
+
 from minio import Minio
 from minio.commonconfig import ENABLED, Filter, ComposeSource
 from minio.deleteobjects import DeleteObject
@@ -8,6 +11,9 @@ from minio.lifecycleconfig import LifecycleConfig, Rule, Expiration
 class Uploader:
 
     def __init__(self, config):
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=config['max_workers'])
+        self.treads = {}
+        self.wait_timeout = config['wait_timeout']
         s3 = config['s3']
         secret = os.getenv('SECRET_KEY')
         self.bucket_name = s3['bucket']
@@ -49,8 +55,7 @@ class Uploader:
         except Exception as err:
             print(err)
 
-    def save(self, path, bucket, last, origin_file_name, file_name):
-
+    def submit(self, bucket, file_name, path):
         self.make_bucket(bucket)
         self.set_lifecycle(bucket)
         try:
@@ -59,7 +64,14 @@ class Uploader:
             print(err)
         os.remove(path)
 
+    def save(self, path, bucket, last, origin_file_name, file_name):
+        ft = self.executor.submit(self.submit, bucket, file_name, path)
+        if bucket not in self.treads:
+            self.treads[bucket] = []
+        self.treads[bucket].append(ft)
+
         if last == 'true':
+            wait(self.treads.pop(bucket), self.wait_timeout)
             self.combine(bucket, origin_file_name)
             self.remove_bucket(bucket)
 
