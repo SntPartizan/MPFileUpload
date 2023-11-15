@@ -1,0 +1,9 @@
+s3.server = '127.0.0.1:9000'
+s3.access_key = '6VCT5WneTj6RmVEv5z31'
+s3.region = 'test'
+s3.secure = false
+# Bucket for uploaded files
+s3.bucket = 'uploaded'
+
+host = 'localhost'
+port = 8080

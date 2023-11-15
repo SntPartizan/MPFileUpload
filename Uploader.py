@@ -7,14 +7,15 @@ from minio.lifecycleconfig import LifecycleConfig, Rule, Expiration
 
 class Uploader:
 
-    def __init__(self):
+    def __init__(self, config):
+        s3 = config['s3']
         secret = os.getenv('SECRET_KEY')
-        self.bucket_name = 'uploaded'
-        self.minioClient = Minio('127.0.0.1:9000',
-                                 access_key='6VCT5WneTj6RmVEv5z31',
+        self.bucket_name = s3['bucket']
+        self.minioClient = Minio(s3['server'],
+                                 access_key=s3['access_key'],
                                  secret_key=secret,
-                                 region="test",
-                                 secure=False)
+                                 region=s3['region'],
+                                 secure=s3['secure'])
 
         self.make_bucket(self.bucket_name)
 
