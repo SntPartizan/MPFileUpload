@@ -18,7 +18,8 @@ class Uploader:
 
         self.make_bucket(self.bucket_name)
 
-    def remove_bucket(self, bucket, objects):
+    def remove_bucket(self, bucket):
+        objects = self.minioClient.list_objects(bucket, "chunk")
         rem_list = [DeleteObject(x.object_name) for x in objects]
         errors = self.minioClient.remove_objects(bucket, rem_list)
         for error in errors:
@@ -47,7 +48,8 @@ class Uploader:
         except Exception as err:
             print(err)
 
-    def save(self, path, bucket, file_name):
+    def save(self, path, bucket, last, origin_file_name, file_name):
+
         self.make_bucket(bucket)
         self.set_lifecycle(bucket)
         try:
@@ -56,7 +58,12 @@ class Uploader:
             print(err)
         os.remove(path)
 
-    def combine(self, bucket, objects, file_name):
+        if last == 'true':
+            self.combine(bucket, origin_file_name)
+            self.remove_bucket(bucket)
+
+    def combine(self, bucket, file_name):
+        objects = self.minioClient.list_objects(bucket, "chunk")
         sources = [ComposeSource(bucket, obj.object_name) for obj in objects]
         result = self.minioClient.compose_object(self.bucket_name, file_name, sources)
         print(f"{result.object_name =}")

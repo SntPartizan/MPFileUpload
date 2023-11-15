@@ -10,10 +10,6 @@ load_dotenv()
 
 uploader = Uploader()
 
-
-
-
-
 proj_dir = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -39,37 +35,24 @@ def post():
         return "no file"
 
     uid = request.params.get('uid')
-    last = request.params.get('last')
-
-    origin_file_name = request.params.get('origin')
+    params = {
+        "bucket": uid,
+        "last": request.params.get('last'),
+        "origin_file_name": request.params.get('origin'),
+        "file_name": file.filename,
+    }
 
     upl_dir = os.path.join(proj_dir, "uploads")
 
     path = os.path.join(upl_dir, f"{uid}_{file.filename}")
     file.save(path, overwrite=True)
 
-    print(uid)
-    uploader.save(path, uid, file.filename)
-    if last == 'true':
-        objects = list(uploader.minioClient.list_objects(uid, "chunk"))
-        uploader.combine(uid, objects, origin_file_name)
-        uploader.remove_bucket(uid, objects)
+    uploader.save(path, **params)
 
     return file.filename
 
 
-
-
-
-
-
-
-
-
-
-
 def main():
-
     run(host='localhost', port=8080)
     # run(host='0.0.0.0', port=8080)
 
