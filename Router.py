@@ -42,7 +42,10 @@ class Router:
             "file_name": file.filename,
         }
 
+            
         upl_dir = os.path.join(self.upload_to, "uploads")
+        if not os.path.exists(upl_dir):
+            os.mkdir(upl_dir)
 
         path = os.path.join(upl_dir, f"{uid}_{file.filename}")
         file.save(path, overwrite=True)
